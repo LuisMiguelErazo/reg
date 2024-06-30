@@ -16,8 +16,6 @@ def load_data(zip_path, csv_name):
         return pd.DataFrame()
     try:
         with zipfile.ZipFile(zip_path, 'r') as zipf:
-            # Mostrar el contenido del archivo ZIP
-            st.write("Content of the ZIP file:", zipf.namelist())
             if csv_name in zipf.namelist():
                 with zipf.open(csv_name) as f:
                     df = pd.read_csv(f)
@@ -132,13 +130,24 @@ if st.button('Predict'):
     state_predictions = predict_state_salaries(experience_level, industry, category, min_salary, max_salary)
     prediction_df = pd.DataFrame(state_predictions, columns=['state', 'predicted_salary'])
     
+    custom_blues = [
+        "rgb(8, 48, 107)",
+        "rgb(8, 81, 156)",
+        "rgb(33, 113, 181)",
+        "rgb(66, 146, 198)",
+        "rgb(107, 174, 214)",
+        "rgb(158, 202, 225)",
+        "rgb(198, 219, 239)",
+        "rgb(222, 235, 247)"
+    ]
+    
     fig = px.choropleth(
         prediction_df,
         locations='state',
         locationmode="USA-states",
         color='predicted_salary',
         scope="usa",
-        color_continuous_scale="Viridis",
+        color_continuous_scale=custom_blues,
         labels={'predicted_salary': 'Predicted Salary'}
     )
     
