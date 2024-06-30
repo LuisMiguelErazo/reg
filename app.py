@@ -57,7 +57,7 @@ def train_model(x_train, y_train):
     return model
 
 # Cargar y preprocesar los datos
-df = load_data('df_clean_final.zip', 'df_clean_final - copia.csv')
+df = load_data('df_clean_final.zip', 'df_clean_final - copia2.csv')
 if df.empty:
     st.stop()
 
