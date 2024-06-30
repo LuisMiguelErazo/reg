@@ -16,11 +16,15 @@ def load_data(zip_path, csv_name):
         return pd.DataFrame()
     try:
         with zipfile.ZipFile(zip_path, 'r') as zipf:
-            with zipf.open(csv_name) as f:
-                df = pd.read_csv(f)
-        df.drop(columns=['Unnamed: 0'], inplace=True)
-        df[["formatted_experience_level", "group_industry", "category", "state_formatted"]] = df[["formatted_experience_level", "group_industry", "category", "state_formatted"]].astype("string")
-        return df
+            if csv_name in zipf.namelist():
+                with zipf.open(csv_name) as f:
+                    df = pd.read_csv(f)
+                df.drop(columns=['Unnamed: 0'], inplace=True)
+                df[["formatted_experience_level", "group_industry", "category", "state_formatted"]] = df[["formatted_experience_level", "group_industry", "category", "state_formatted"]].astype("string")
+                return df
+            else:
+                st.error(f"The file '{csv_name}' does not exist in the ZIP archive.")
+                return pd.DataFrame()
     except zipfile.BadZipFile:
         st.error("The provided ZIP file is not valid.")
         return pd.DataFrame()
