@@ -1,0 +1,8 @@
+pandas
+numpy
+matplotlib.pyplot
+seaborn
+xgboost
+zipfile
+streamlit
+plotly.express
