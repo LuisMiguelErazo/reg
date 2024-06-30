@@ -7,7 +7,7 @@ import zipfile
 import streamlit as st
 import plotly.express as px
 
-# Cargar datos
+# Función para cargar los datos
 @st.cache_data
 def load_data():
     with zipfile.ZipFile('df_clean_final.zip', 'r') as zipf:
@@ -17,9 +17,7 @@ def load_data():
     df[["formatted_experience_level", "group_industry", "category", "state_formatted"]] = df[["formatted_experience_level", "group_industry", "category", "state_formatted"]].astype("string")
     return df
 
-df = load_data()
-
-# Preprocesar datos
+# Función para preprocesar los datos
 @st.cache_data
 def preprocess_data(df):
     df_dummies = pd.get_dummies(df, columns=["formatted_experience_level", "group_industry", "category", "state_formatted"])
@@ -27,9 +25,7 @@ def preprocess_data(df):
     y = df_dummies['medium_salary']
     return x, y
 
-x, y = preprocess_data(df)
-
-# Entrenar modelo
+# Función para entrenar el modelo
 @st.cache_resource
 def train_model(x_train, y_train):
     dtrain = xgb.DMatrix(x_train, label=y_train)
@@ -46,14 +42,23 @@ def train_model(x_train, y_train):
     model = xgb.train(params, dtrain, num_rounds)
     return model
 
+# Cargar y preprocesar los datos
+df = load_data()
+x, y = preprocess_data(df)
+
+# Dividir los datos en conjuntos de entrenamiento y prueba
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+
+# Entrenar el modelo
 model = train_model(x_train, y_train)
 
+# Predecir y calcular métricas de desempeño
 dtest = xgb.DMatrix(x_test)
 y_pred = model.predict(dtest)
 rmse = mean_squared_error(y_test, y_pred, squared=False)
 r2 = r2_score(y_test, y_pred)
 
+# Mostrar métricas en el dashboard
 st.write(f"RMSE: {rmse}")
 st.write(f"R-squared score: {r2:.4f}")
 
@@ -78,6 +83,7 @@ def predict_state_salaries(experience_level, industry, category, min_salary, max
         predictions.append((state, prediction[0]))
     return predictions
 
+# Interfaz del usuario en Streamlit
 st.title("Salary Prediction Dashboard")
 
 experience_level = st.selectbox("Experience Level:", df['formatted_experience_level'].unique())
