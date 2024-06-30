@@ -1,7 +1,5 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
@@ -10,45 +8,49 @@ import streamlit as st
 import plotly.express as px
 
 # Cargar datos
-with zipfile.ZipFile('df_clean_final.zip', 'r') as zipf:
-    with zipf.open('df_clean_final - copia.csv') as f:
-        df = pd.read_csv(f)
+@st.cache_data
+def load_data():
+    with zipfile.ZipFile('df_clean_final.zip', 'r') as zipf:
+        with zipf.open('df_clean_final - copia.csv') as f:
+            df = pd.read_csv(f)
+    df.drop(columns=['Unnamed: 0'], inplace=True)
+    df[["formatted_experience_level", "group_industry", "category", "state_formatted"]] = df[["formatted_experience_level", "group_industry", "category", "state_formatted"]].astype("string")
+    return df
 
-df.drop(columns=['Unnamed: 0'], inplace=True)
+df = load_data()
 
-# Cambiar variables de interés a formato de cadena
-df[["formatted_experience_level", "group_industry", "category", "state_formatted"]] = df[["formatted_experience_level", "group_industry", "category", "state_formatted"]].astype("string")
+# Preprocesar datos
+@st.cache_data
+def preprocess_data(df):
+    df_dummies = pd.get_dummies(df, columns=["formatted_experience_level", "group_industry", "category", "state_formatted"])
+    x = df_dummies.drop(columns=['medium_salary', 'job_id', 'company_id', 'state', 'city', 'industry_id', 'job_title', 'description', 'location'])
+    y = df_dummies['medium_salary']
+    return x, y
 
-df_dummies = pd.get_dummies(df, columns=["formatted_experience_level", "group_industry", "category", "state_formatted"])
+x, y = preprocess_data(df)
 
-x = df_dummies.drop(columns=['medium_salary', 'job_id', 'company_id', 'state', 'city', 'industry_id', 'job_title', 'description', 'location'])
-y = df_dummies['medium_salary']
+# Entrenar modelo
+@st.cache_resource
+def train_model(x_train, y_train):
+    dtrain = xgb.DMatrix(x_train, label=y_train)
+    params = {
+        'objective': 'reg:squarederror',
+        'eval_metric': 'rmse',
+        'eta': 0.09,
+        'max_depth': 4,
+        'subsample': 0.9,
+        'colsample_bytree': 0.9,
+        'seed': 42
+    }
+    num_rounds = 770
+    model = xgb.train(params, dtrain, num_rounds)
+    return model
 
-# Dividir los datos en conjuntos de entrenamiento y prueba
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+model = train_model(x_train, y_train)
 
-# Convertir datos al formato DMatrix (optimizado para XGBoost)
-dtrain = xgb.DMatrix(x_train, label=y_train)
-dtest = xgb.DMatrix(x_test, label=y_test)
-
-params = {
-    'objective': 'reg:squarederror',
-    'eval_metric': 'rmse',
-    'eta': 0.09,
-    'max_depth': 4,
-    'subsample': 0.9,
-    'colsample_bytree': 0.9,
-    'seed': 42
-}
-
-# Entrenamiento
-num_rounds = 770
-model = xgb.train(params, dtrain, num_rounds)
-
-# Predicción en datos de prueba
+dtest = xgb.DMatrix(x_test)
 y_pred = model.predict(dtest)
-
-# Calcular RMSE
 rmse = mean_squared_error(y_test, y_pred, squared=False)
 r2 = r2_score(y_test, y_pred)
 
