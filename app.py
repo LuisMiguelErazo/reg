@@ -9,13 +9,17 @@ import plotly.express as px
 
 # Función para cargar los datos
 @st.cache_data
-def load_data():
-    with zipfile.ZipFile('df_clean_final.zip', 'r') as zipf:
-        with zipf.open('df_clean_final - copia.csv') as f:
-            df = pd.read_csv(f)
-    df.drop(columns=['Unnamed: 0'], inplace=True)
-    df[["formatted_experience_level", "group_industry", "category", "state_formatted"]] = df[["formatted_experience_level", "group_industry", "category", "state_formatted"]].astype("string")
-    return df
+def load_data(zip_path, csv_name):
+    try:
+        with zipfile.ZipFile(zip_path, 'r') as zipf:
+            with zipf.open(csv_name) as f:
+                df = pd.read_csv(f)
+        df.drop(columns=['Unnamed: 0'], inplace=True)
+        df[["formatted_experience_level", "group_industry", "category", "state_formatted"]] = df[["formatted_experience_level", "group_industry", "category", "state_formatted"]].astype("string")
+        return df
+    except zipfile.BadZipFile:
+        st.error("The provided ZIP file is not valid.")
+        return pd.DataFrame()
 
 # Función para preprocesar los datos
 @st.cache_data
@@ -24,15 +28,6 @@ def preprocess_data(df):
     x = df_dummies.drop(columns=['medium_salary', 'job_id', 'company_id', 'state', 'city', 'industry_id', 'job_title', 'description', 'location'])
     y = df_dummies['medium_salary']
     return x, y
-
-# Cargar y preprocesar los datos
-df = load_data()
-x, y = preprocess_data(df)
-
-# Dividir los datos en conjuntos de entrenamiento y prueba (utilizar una muestra si es necesario)
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
-x_train_sample = x_train.sample(frac=0.1, random_state=42)  # Utilizar solo una muestra de los datos
-y_train_sample = y_train.loc[x_train_sample.index]
 
 # Entrenar el modelo (cargar el modelo entrenado previamente si existe)
 @st.cache_resource
@@ -50,6 +45,18 @@ def train_model(x_train, y_train):
     num_rounds = 100  # Reducir el número de rondas de entrenamiento
     model = xgb.train(params, dtrain, num_rounds)
     return model
+
+# Cargar y preprocesar los datos
+df = load_data('df_clean_final.zip', 'df_clean_final - copia.csv')
+if df.empty:
+    st.stop()
+
+x, y = preprocess_data(df)
+
+# Dividir los datos en conjuntos de entrenamiento y prueba (utilizar una muestra si es necesario)
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+x_train_sample = x_train.sample(frac=0.1, random_state=42)  # Utilizar solo una muestra de los datos
+y_train_sample = y_train.loc[x_train_sample.index]
 
 model = train_model(x_train_sample, y_train_sample)
 
