@@ -11,8 +11,8 @@ import plotly.express as px
 @st.cache_data
 def load_data(zip_path, csv_name):
     try:
-        with zipfile.ZipFile(zip_path, 'r') as zipf:
-            with zipf.open(csv_name) as f:
+        with zipfile.ZipFile('df_clean_final.zip', 'r') as zipf:
+            with zipf.open('df_clean_final - copia.csv') as f:
                 df = pd.read_csv(f)
         df.drop(columns=['Unnamed: 0'], inplace=True)
         df[["formatted_experience_level", "group_industry", "category", "state_formatted"]] = df[["formatted_experience_level", "group_industry", "category", "state_formatted"]].astype("string")
