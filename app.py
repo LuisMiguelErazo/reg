@@ -25,7 +25,16 @@ def preprocess_data(df):
     y = df_dummies['medium_salary']
     return x, y
 
-# Función para entrenar el modelo
+# Cargar y preprocesar los datos
+df = load_data()
+x, y = preprocess_data(df)
+
+# Dividir los datos en conjuntos de entrenamiento y prueba (utilizar una muestra si es necesario)
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+x_train_sample = x_train.sample(frac=0.1, random_state=42)  # Utilizar solo una muestra de los datos
+y_train_sample = y_train.loc[x_train_sample.index]
+
+# Entrenar el modelo (cargar el modelo entrenado previamente si existe)
 @st.cache_resource
 def train_model(x_train, y_train):
     dtrain = xgb.DMatrix(x_train, label=y_train)
@@ -38,19 +47,11 @@ def train_model(x_train, y_train):
         'colsample_bytree': 0.9,
         'seed': 42
     }
-    num_rounds = 770
+    num_rounds = 100  # Reducir el número de rondas de entrenamiento
     model = xgb.train(params, dtrain, num_rounds)
     return model
 
-# Cargar y preprocesar los datos
-df = load_data()
-x, y = preprocess_data(df)
-
-# Dividir los datos en conjuntos de entrenamiento y prueba
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
-
-# Entrenar el modelo
-model = train_model(x_train, y_train)
+model = train_model(x_train_sample, y_train_sample)
 
 # Predecir y calcular métricas de desempeño
 dtest = xgb.DMatrix(x_test)
@@ -126,4 +127,3 @@ if st.button('Predict'):
     
     st.write(f"Predicted Salary for {state}: ${prediction:,.2f}")
     st.plotly_chart(fig)
-
