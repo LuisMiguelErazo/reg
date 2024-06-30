@@ -6,25 +6,17 @@ from sklearn.metrics import mean_squared_error, r2_score
 import zipfile
 import streamlit as st
 import plotly.express as px
-import os
 
 # Función para cargar los datos
 @st.cache_data
 def load_data(zip_path, csv_name):
-    if not os.path.exists(zip_path):
-        st.error(f"The ZIP file '{zip_path}' does not exist.")
-        return pd.DataFrame()
     try:
         with zipfile.ZipFile(zip_path, 'r') as zipf:
-            if csv_name in zipf.namelist():
-                with zipf.open(csv_name) as f:
-                    df = pd.read_csv(f)
-                df.drop(columns=['Unnamed: 0'], inplace=True)
-                df[["formatted_experience_level", "group_industry", "category", "state_formatted"]] = df[["formatted_experience_level", "group_industry", "category", "state_formatted"]].astype("string")
-                return df
-            else:
-                st.error(f"The file '{csv_name}' does not exist in the ZIP archive.")
-                return pd.DataFrame()
+            with zipf.open(csv_name) as f:
+                df = pd.read_csv(f)
+        df.drop(columns=['Unnamed: 0'], inplace=True)
+        df[["formatted_experience_level", "group_industry", "category", "state_formatted"]] = df[["formatted_experience_level", "group_industry", "category", "state_formatted"]].astype("string")
+        return df
     except zipfile.BadZipFile:
         st.error("The provided ZIP file is not valid.")
         return pd.DataFrame()
