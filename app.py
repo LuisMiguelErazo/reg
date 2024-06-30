@@ -10,9 +10,26 @@ import os
 
 # Función para cargar los datos
 @st.cache_data
-with zipfile.ZipFile('df_clean_final.zip', 'r') as zipf:
-    with zipf.open('df_clean_final - copia.csv') as f:
-        df = pd.read_csv(f)
+def load_data(zip_path, csv_name):
+    if not os.path.exists(zip_path):
+        st.error(f"The ZIP file '{zip_path}' does not exist.")
+        return pd.DataFrame()
+    try:
+        with zipfile.ZipFile(zip_path, 'r') as zipf:
+            # Mostrar el contenido del archivo ZIP
+            st.write("Content of the ZIP file:", zipf.namelist())
+            if csv_name in zipf.namelist():
+                with zipf.open(csv_name) as f:
+                    df = pd.read_csv(f)
+                df.drop(columns=['Unnamed: 0'], inplace=True)
+                df[["formatted_experience_level", "group_industry", "category", "state_formatted"]] = df[["formatted_experience_level", "group_industry", "category", "state_formatted"]].astype("string")
+                return df
+            else:
+                st.error(f"The file '{csv_name}' does not exist in the ZIP archive.")
+                return pd.DataFrame()
+    except zipfile.BadZipFile:
+        st.error("The provided ZIP file is not valid.")
+        return pd.DataFrame()
 
 # Función para preprocesar los datos
 @st.cache_data
@@ -125,5 +142,5 @@ if st.button('Predict'):
         labels={'predicted_salary': 'Predicted Salary'}
     )
     
-    st.write(f"Predicted Salary for {state}: ${prediction:,.2f}")
+    st.markdown(f"<h3 style='text-align: center; color: green;'>Predicted Salary for {state}: ${prediction:,.2f}</h3>", unsafe_allow_html=True)
     st.plotly_chart(fig)
