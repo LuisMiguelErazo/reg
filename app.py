@@ -9,6 +9,7 @@ import zipfile
 import streamlit as st
 import plotly.express as px
 
+# Cargar datos
 with zipfile.ZipFile('df_clean_final.zip', 'r') as zipf:
     with zipf.open('df_clean_final - copia.csv') as f:
         df = pd.read_csv(f)
@@ -117,4 +118,3 @@ if st.button('Predict'):
     
     st.write(f"Predicted Salary for {state}: ${prediction:,.2f}")
     st.plotly_chart(fig)
-
