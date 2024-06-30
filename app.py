@@ -126,3 +126,4 @@ if st.button('Predict'):
     
     st.write(f"Predicted Salary for {state}: ${prediction:,.2f}")
     st.plotly_chart(fig)
+
