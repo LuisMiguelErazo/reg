@@ -15,11 +15,10 @@ def load_data(zip_path, csv_name):
         st.error(f"The ZIP file '{zip_path}' does not exist.")
         return pd.DataFrame()
     try:
-        with zipfile.ZipFile(zip_path, 'r') as zipf:
-            # Mostrar el contenido del archivo ZIP
+        with zipfile.ZipFile('df_clean_final.zip', 'r') as zipf:
             st.write("Content of the ZIP file:", zipf.namelist())
             if csv_name in zipf.namelist():
-                with zipf.open(csv_name) as f:
+                with zipf.open('df_clean_final - copia.csv') as f:
                     df = pd.read_csv(f)
                 df.drop(columns=['Unnamed: 0'], inplace=True)
                 df[["formatted_experience_level", "group_industry", "category", "state_formatted"]] = df[["formatted_experience_level", "group_industry", "category", "state_formatted"]].astype("string")
