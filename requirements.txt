@@ -1,9 +1,7 @@
 pandas
 numpy
-matplotlib
-seaborn
 xgboost
 scikit-learn
-scipy
-plotly
 streamlit
+plotly
+matplotlib
